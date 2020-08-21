@@ -31,7 +31,7 @@ export default {
         type: {
             type: String,
             required: true,
-            default: 'square-fold'
+            default: 'dots'
         },
         size: {
             type: String,
