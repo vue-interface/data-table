@@ -42,6 +42,7 @@
     "@vue-interface/form-control": "^0.9.13",
     "@vue-interface/input-field": "^0.9.16",
     "@vue-interface/pagination": "^0.9.7",
+    "@vue-interface/select-field": "^0.9.6",
     "@vue-interface/shadowable": "^0.9.1",
     "@vue-interface/tailwindcss": "^0.2.8",
     "@vue-interface/utils": "^0.9.20",

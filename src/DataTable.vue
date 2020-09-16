@@ -1,13 +1,13 @@
 <template>
     <div class="data-table">
         <slot name="content" />
-        <header v-if="$slots.form || $slots.buttons || search" class="data-table-header">
-            <form class="data-table-form">
+        <form ref="form" class="data-table-header" @submit.prevent="onSubmit">
+            <div class="data-table-header-left">
                 <input-field
                     v-if="search"
-                    v-model="filters[searchParam]"
+                    v-model="params[searchParam]"
                     icon="search"
-                    :activity="isSearching"
+                    :activity="isSubmitting"
                     :group="false"
                     :placeholder="searchPlaceholder"
                     pill
@@ -16,12 +16,18 @@
                         <magnifying-glass width="1rem" height="1rem" />
                     </template>
                 </input-field>
-                <slot name="form" />
-            </form>
-            <div class="data-table-buttons">
-                <slot name="buttons" />
+                <slot name="left" />
             </div>
-        </header>
+            <div class="data-table-header-right">
+                <label v-if="!limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
+                    <span class="mr-2">{{ limitLabel }}</span>
+                    <select v-model="currentLimit" class="form-control">
+                        <option v-for="value in limitOptions" :key="value">{{ value }}</option>
+                    </select>
+                </label>
+                <slot name="right" />
+            </div>
+        </form>
         <div :class="{'card': !!card, [shadowableClass]: !!shadow}">
             <table class="table" :class="{'loading': !!isLoading}">
                 <slot name="thead" :colspan="colspan" :onOrderBy="onOrderBy">
@@ -53,7 +59,7 @@
                         :colspan="colspan"
                         wave
                         rounded
-                        :rows="currentData.length || limit || 10" />
+                        :rows="currentData.length || currentLimit || 10" />
                     <data-table-error
                         v-else-if="error"
                         :colspan="colspan"
@@ -99,6 +105,7 @@
 <script>
 import axios from 'axios';
 import InputField from '@vue-interface/input-field';
+import SelectField from '@vue-interface/select-field';
 import { debounce, prefix } from '@vue-interface/utils';
 import Shadowable from '@vue-interface/shadowable';
 import DataTableActivityIndicator from './DataTableActivityIndicator';
@@ -153,6 +160,26 @@ export default {
 
         limit: Number,
 
+        limitField: {
+            type: Boolean,
+            defaule: true
+        },
+
+        limitLabel: {
+            type: String,
+            default: 'Per Page'
+        },
+
+        limitOptions: {
+            type: Array,
+            default: () => [1, 5, 10, 20, 50, 100]
+        },
+
+        limitParam: {
+            type: String,
+            default: 'limit'
+        },
+
         order: [Array, String],
 
         params: {
@@ -163,6 +190,11 @@ export default {
         },
 
         page: Number,
+
+        pageParam: {
+            type: String,
+            default: 'page'
+        },
         
         pagination: {
             type: [Boolean, String],
@@ -187,11 +219,11 @@ export default {
             default() {
                 return this.axios.get(this.url, this.transformRequest({
                     params: Object.assign({
-                        limit: this.limit,
-                        page: this.currentPage,
+                        [this.limitParam]: this.currentLimit,
+                        [this.pageParam]: this.currentPage,
                         // order: this.currentSort && Object.entries(this.currentSort).map(([key]) => key).join(','),
                         // sort: this.currentSort && Object.entries(this.currentSort).map(([key, value]) => value).join(','),
-                    }, this.params, this.filters)
+                    }, this.params)
                 }));
             }
         },
@@ -252,14 +284,14 @@ export default {
     data() {
         return {
             currentHeight: null,
+            currentLimit: this.limit,
             currentPage: this.page ? parseInt(this.page) : undefined,
             currentSort: [],
             currentData: this.data || [],
             error: null,
-            filters: {},
             hasLoadedOnce: false,
             isLoading: this.activity,
-            isSearching: false,
+            isSubmitting: false,
             totalPages: Infinity
         };
     },
@@ -279,11 +311,16 @@ export default {
                 });
             }
         },
+
         currentPage() {
             const { height } = getComputedStyle(this.$el.querySelector('tbody'));
             const { paddingTop, paddingBottom, borderBottomWidth } = getComputedStyle(this.$el.querySelector('td'));
 
             this.currentHeight = `calc(${height} - ${paddingTop} - ${paddingBottom} - ${borderBottomWidth})`;
+            this.fetch();
+        },
+
+        currentLimit() {
             this.fetch();
         }
     },
@@ -341,6 +378,10 @@ export default {
             this.currentPage = Math.max(1, --this.currentPage);
         },
 
+        submit() {
+            this.$refs.form.dispatchEvent(new Event('submit'));
+        },
+
         onPaginate(page) {
             this.currentPage = parseInt(page || 1);
         },
@@ -367,12 +408,19 @@ export default {
             }
         },
 
-        onSearchInput() {
-            debounced(() => {
-                this.isSearching = true;
-                this.fetch().then(() => {
-                    this.isSearching = false;
-                });
+        onSearchInput(value) {
+            if(value) {
+                debounced(this.submit);
+            }
+            else {
+                this.submit();
+            }
+        },
+
+        onSubmit(e) {
+            this.isSubmitting = true;
+            this.fetch().then(() => {
+                this.isSubmitting = false;
             });
         },
 
@@ -393,8 +441,8 @@ export default {
     width: 100%;   
 }
 
-.data-table .input-field.has-focus,
-.data-table .input-field:not(.is-empty) {
+.data-table .input-field.has-focus:not(.is-empty),
+.data-table .input-field.has-activity {
     width: 115%;
 }
 
@@ -403,6 +451,20 @@ export default {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
+}
+
+.data-table-header .data-table-header-right {
+    display: flex;
+}
+
+.data-table-header .data-table-header-inline-field {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
+.data-table-header .data-table-header-inline-field span {
+    flex-shrink: 0;
 }
 
 .data-table-pagination {
