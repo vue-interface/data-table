@@ -2,19 +2,14 @@
     <tbody>
         <tr>
             <td :colspan="colspan">
-                <activity-indicator :height="height" :type="type" :size="size" center />
+                <activity-indicator :height="height" :size="size" :type="type" center />
             </td>
         </tr>
     </tbody>
 </template>
 
 <script>
-import { ActivityIndicator, register } from '@vue-interface/activity-indicator';
-import Dots from '@vue-interface/activity-indicator/src/types/Dots';
-
-register({
-    'dots': Dots
-});
+import { ActivityIndicator } from '@vue-interface/activity-indicator';
 
 export default {
     components: {

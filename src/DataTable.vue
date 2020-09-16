@@ -1,33 +1,65 @@
 <template>
     <div class="data-table">
         <slot name="content" />
-        <header v-if="$slots.form || $$slots.buttons" class="data-table-header">
-            <div v-if="$slots.form" class="data-table-form">
+        <header v-if="$slots.form || $slots.buttons || search" class="data-table-header">
+            <form class="data-table-form">
+                <input-field
+                    v-if="search"
+                    v-model="filters[searchParam]"
+                    icon="search"
+                    :activity="isSearching"
+                    :group="false"
+                    :placeholder="searchPlaceholder"
+                    pill
+                    @input="onSearchInput">
+                    <template #icon>
+                        <magnifying-glass width="1rem" height="1rem" />
+                    </template>
+                </input-field>
                 <slot name="form" />
-            </div>
-            <div v-if="$slots.buttons" class="data-table-buttons">
+            </form>
+            <div class="data-table-buttons">
                 <slot name="buttons" />
             </div>
         </header>
-        <div :class="{'card': !!card, [shadow]: !!shadow}">
+        <div :class="{'card': !!card, [shadowableClass]: !!shadow}">
             <table class="table" :class="{'loading': !!isLoading}">
-                <slot name="thead">
+                <slot name="thead" :colspan="colspan" :onOrderBy="onOrderBy">
                     <data-table-head @order="onOrderBy">
-                        <slot name="th" />
+                        <slot name="th" :colspan="colspan" />
                     </data-table-head>
                 </slot>
-                <slot name="tbody">
+                <slot
+                    name="tbody"
+                    :colspan="colspan"
+                    :currentData="currentData"
+                    :error="error"
+                    :isLoading="isLoading"
+                    :title="placeholderTitle"
+                    :subtitle="placeholderSubtitle">
                     <tbody v-if="!isLoading && currentData.length">
                         <tr v-for="(row, i) in currentData" :key="i">
                             <slot :row="row" />
                         </tr>
                     </tbody>
                     <data-table-activity-indicator
-                        v-else-if="isLoading"
+                        v-else-if="isLoading && indicator"
                         :colspan="colspan"
                         :height="hasLoadedOnce ? currentHeight : initialHeight"
                         :type="indicator"
                         :size="indicatorSize" />
+                    <data-table-animated-grid
+                        v-else-if="isLoading"
+                        :colspan="colspan"
+                        wave
+                        rounded
+                        :rows="currentData.length || limit || 10" />
+                    <data-table-error
+                        v-else-if="error"
+                        :colspan="colspan"
+                        :error="error">
+                        <slot name="error" :error="error" />
+                    </data-table-error>
                     <data-table-placeholder
                         v-else
                         :colspan="colspan"
@@ -36,38 +68,67 @@
                         <empty-box class="mt-2" height="5rem" />
                     </data-table-placeholder>
                 </slot>
-                <slot name="tfoot">
+                <slot name="tfoot" :colspan="colspan">
                     <tfoot v-if="$slots.tf">
                         <tr>
-                            <slot name="tf" />
+                            <slot name="tf" :colspan="colspan" />
                         </tr>
                     </tfoot>
                 </slot>
             </table>
-            <slot name="pagination">
-                <data-table-pagination :type="pagination" :page="currentPage" :total-pages="totalPages" @paginate="onPaginate" />
-            </slot>
         </div>
+        <slot
+            name="pagination"
+            :currentPage="currentPage"
+            :hasLoadedOnce="hasLoadedOnce"
+            :page="currentPage"
+            :totalPages="totalPages">
+            <data-table-pagination
+                v-if="pagination && !error"
+                :disabled="!hasLoadedOnce"
+                :type="pagination"
+                :page="currentPage"
+                :total-pages="totalPages"
+                :shadow="shadow"
+                class="mt-3"
+                @paginate="onPaginate" />
+        </slot>
     </div>
 </template>
 
 <script>
 import axios from 'axios';
-import DataTableHead from './DataTableHead';
+import InputField from '@vue-interface/input-field';
+import { debounce, prefix } from '@vue-interface/utils';
+import Shadowable from '@vue-interface/shadowable';
 import DataTableActivityIndicator from './DataTableActivityIndicator';
-import DataTablePlaceholder from './DataTablePlaceholder';
+import DataTableAnimatedGrid from './DataTableAnimatedGrid';
+import DataTableError from './DataTableError';
+import DataTableHead from './DataTableHead';
 import DataTablePagination from './DataTablePagination';
+import DataTablePlaceholder from './DataTablePlaceholder';
 import EmptyBox from './EmptyBox';
+import MagnifyingGlass from './MagnifyingGlass';
+
+const debounced = debounce((fn, ...args) => fn(...args), 500);
 
 export default {
 
     components: {
         DataTableActivityIndicator,
+        DataTableAnimatedGrid,
+        DataTableError,
         DataTableHead,
-        DataTablePlaceholder,
         DataTablePagination,
+        DataTablePlaceholder,
         EmptyBox,
+        InputField,
+        MagnifyingGlass
     },
+    
+    mixins: [
+        Shadowable  
+    ],
 
     props: {
         activity: Boolean,
@@ -90,7 +151,7 @@ export default {
             default: 250
         },
 
-        limit: String,
+        limit: Number,
 
         order: [Array, String],
 
@@ -101,13 +162,10 @@ export default {
             }
         },
 
-        page: {
-            type: [Number, String],
-            default: 1
-        },
+        page: Number,
         
         pagination: {
-            type: String,
+            type: [Boolean, String],
             default: 'full',
             validate(value) {
                 return ['simple', 'full'].indexOf(value) > -1;
@@ -133,16 +191,26 @@ export default {
                         page: this.currentPage,
                         // order: this.currentSort && Object.entries(this.currentSort).map(([key]) => key).join(','),
                         // sort: this.currentSort && Object.entries(this.currentSort).map(([key, value]) => value).join(','),
-                    }, this.params)
+                    }, this.params, this.filters)
                 }));
             }
         },
-        
-        shadow: {
-            type: [String, Boolean],
-            default: 'shadow-sm'
+
+        search: {
+            type: Boolean,
+            default: false
         },
 
+        searchPlaceholder: {
+            type: String,
+            default: 'Search by keyword(s)'
+        },
+
+        searchParam: {
+            type: String,
+            default: 'q'
+        },
+        
         transformRequest: {
             type: Function,
             default: data => data
@@ -180,17 +248,22 @@ export default {
         
         url: String
     },
+
     data() {
         return {
             currentHeight: null,
-            currentPage: parseInt(this.page),
+            currentPage: this.page ? parseInt(this.page) : undefined,
             currentSort: [],
             currentData: this.data || [],
+            error: null,
+            filters: {},
             hasLoadedOnce: false,
             isLoading: this.activity,
+            isSearching: false,
             totalPages: Infinity
         };
     },
+
     computed: {
         colspan() {
             return this.$slots.th.filter(vnode => !!vnode.tag).length || 1;
@@ -245,21 +318,19 @@ export default {
             return this.request().then(({ data }) => {  
                 const response = this.handleResponse(data);
   
+                this.currentPage = this.currentPage || 1;
                 this.isLoading = false;
                 this.hasLoadedOnce = true;
-
-                /*
-                if(!this.currentHeight) { 
-                    this.isLoading = false;
-                }
-                */
-                               
+         
                 return response;
+            }, e => {
+                this.isLoading = false;
+                this.error = e;
             });
         },
 
         setPage(page) {
-            this.currentPage = parseInt(page);
+            this.currentPage = parseInt(page || 1);
         },
 
         next() {
@@ -271,7 +342,7 @@ export default {
         },
 
         onPaginate(page) {
-            this.currentPage = parseInt(page);
+            this.currentPage = parseInt(page || 1);
         },
 
         orderBy(column, direction, vnode) {
@@ -296,6 +367,15 @@ export default {
             }
         },
 
+        onSearchInput() {
+            debounced(() => {
+                this.isSearching = true;
+                this.fetch().then(() => {
+                    this.isSearching = false;
+                });
+            });
+        },
+
         onOrderBy(column, direction, vnode) {
             this.orderBy(column, direction, vnode);
             this.$emit('sort', this.currentSort);
@@ -307,6 +387,15 @@ export default {
 <style>
 .data-table {
     position: relative;
+}
+
+.data-table .input-field {
+    width: 100%;   
+}
+
+.data-table .input-field.has-focus,
+.data-table .input-field:not(.is-empty) {
+    width: 115%;
 }
 
 .data-table-header {
@@ -343,7 +432,7 @@ export default {
     border-radius: 0 .25em 0 0;
 }
 
-.data-table tfoot .pagination {
+.data-table .pagination {
     margin-bottom: 0;
 }
 </style>
