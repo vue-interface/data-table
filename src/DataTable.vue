@@ -59,7 +59,7 @@
                         :colspan="colspan"
                         wave
                         rounded
-                        :rows="currentData.length || currentLimit || 10" />
+                        :rows="currentData.length || currentLimit" />
                     <data-table-error
                         v-else-if="error"
                         :colspan="colspan"
@@ -158,7 +158,10 @@ export default {
             default: 250
         },
 
-        limit: Number,
+        limit: {
+            type: Number,
+            default: 10
+        },
 
         limitField: {
             type: Boolean,
