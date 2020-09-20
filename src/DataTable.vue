@@ -1,5 +1,8 @@
 <template>
     <div class="data-table">
+        <component :is="titleTag" v-if="title" class="mb-3">
+            {{ title }}
+        </component>
         <slot name="content" />
         <form ref="form" class="data-table-header" @submit.prevent="onSubmit">
             <div class="data-table-header-left">
@@ -19,7 +22,7 @@
                 <slot name="left" />
             </div>
             <div class="data-table-header-right">
-                <label v-if="!limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
+                <label v-if="hasLoadedOnce && !limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
                     <span class="mr-2">{{ limitLabel }}</span>
                     <select v-model="currentLimit" class="form-control">
                         <option v-for="value in limitOptions" :key="value">{{ value }}</option>
@@ -43,13 +46,8 @@
                     :isLoading="isLoading"
                     :title="placeholderTitle"
                     :subtitle="placeholderSubtitle">
-                    <tbody v-if="!isLoading && currentData.length">
-                        <tr v-for="(row, i) in currentData" :key="i">
-                            <slot :row="row" />
-                        </tr>
-                    </tbody>
                     <data-table-activity-indicator
-                        v-else-if="isLoading && indicator"
+                        v-if="isLoading && indicator"
                         :colspan="colspan"
                         :height="hasLoadedOnce ? currentHeight : initialHeight"
                         :type="indicator"
@@ -60,6 +58,11 @@
                         wave
                         rounded
                         :rows="currentData.length || currentLimit" />
+                    <tbody v-else-if="!isLoading && currentData.length">
+                        <tr v-for="(row, i) in currentData" :key="i">
+                            <slot :row="row" />
+                        </tr>
+                    </tbody>
                     <data-table-error
                         v-else-if="error"
                         :colspan="colspan"
@@ -90,7 +93,7 @@
             :page="currentPage"
             :totalPages="totalPages">
             <data-table-pagination
-                v-if="pagination && !error"
+                v-if="totalPages > 1 && hasLoadedOnce && pagination && !error"
                 :disabled="!hasLoadedOnce"
                 :type="pagination"
                 :page="currentPage"
@@ -245,7 +248,14 @@ export default {
             type: String,
             default: 'q'
         },
-        
+
+        title: String,
+
+        titleTag: {
+            type: String,
+            default: 'h3'
+        },
+
         transformRequest: {
             type: Function,
             default: data => data
@@ -267,7 +277,7 @@ export default {
 
                         // Attempt to extract the total pages from the response
                         // using logical defaults.
-                        totalPages: response.totalPages || response.total_pages || response.lastPage || response.last_page
+                        totalPages: response.totalPages || response.total_pages || response.total
                     };
                 }
 
@@ -315,16 +325,20 @@ export default {
             }
         },
 
-        currentPage() {
-            const { height } = getComputedStyle(this.$el.querySelector('tbody'));
-            const { paddingTop, paddingBottom, borderBottomWidth } = getComputedStyle(this.$el.querySelector('td'));
+        currentPage(value, oldValue) {
+            if(value && oldValue) {
+                const { height } = getComputedStyle(this.$el.querySelector('tbody'));
+                const { paddingTop, paddingBottom, borderBottomWidth } = getComputedStyle(this.$el.querySelector('td'));
 
-            this.currentHeight = `calc(${height} - ${paddingTop} - ${paddingBottom} - ${borderBottomWidth})`;
-            this.fetch();
+                this.currentHeight = `calc(${height} - ${paddingTop} - ${paddingBottom} - ${borderBottomWidth})`;
+                this.fetch();
+            }
         },
 
-        currentLimit() {
-            this.fetch();
+        currentLimit(value, oldValue) {
+            if(value && oldValue) {
+                this.fetch();
+            }
         }
     },
 
@@ -358,7 +372,7 @@ export default {
             return this.request().then(({ data }) => {  
                 const response = this.handleResponse(data);
   
-                this.currentPage = this.currentPage || 1;
+                this.currentPage = this.currentPage;
                 this.isLoading = false;
                 this.hasLoadedOnce = true;
          

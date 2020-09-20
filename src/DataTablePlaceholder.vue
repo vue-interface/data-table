@@ -2,7 +2,7 @@
     <tbody>
         <tr>
             <td :colspan="colspan">
-                <div class="my-4 py-5 text-center bg-white">
+                <div class="my-5 text-center bg-white">
                     <h3 v-if="title">
                         {{ title }}
                     </h3>
