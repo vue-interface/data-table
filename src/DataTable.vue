@@ -277,7 +277,7 @@ export default {
 
                         // Attempt to extract the total pages from the response
                         // using logical defaults.
-                        totalPages: response.totalPages || response.total_pages || response.last_page
+                        totalPages: response.last_page || response.lastPage || response.totalPages || response.total_pages
                     };
                 }
 
