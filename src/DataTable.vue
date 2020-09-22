@@ -1,11 +1,11 @@
 <template>
     <div class="data-table">
-        <component :is="titleTag" v-if="title" class="mb-3">
-            {{ title }}
-        </component>
         <slot name="content" />
         <form ref="form" class="data-table-header" @submit.prevent="onSubmit">
             <div class="data-table-header-left">
+                <component :is="titleTag" v-if="title" :class="{'mb-3': search, 'mb-0': !search}">
+                    {{ title }}
+                </component>
                 <input-field
                     v-if="search"
                     v-model="params[searchParam]"
@@ -22,7 +22,7 @@
                 <slot name="left" />
             </div>
             <div class="data-table-header-right">
-                <label v-if="hasLoadedOnce && !limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
+                <label v-if="hasLoadedOnce && limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
                     <span class="mr-2">{{ limitLabel }}</span>
                     <select v-model="currentLimit" class="form-control">
                         <option v-for="value in limitOptions" :key="value">{{ value }}</option>
@@ -168,7 +168,7 @@ export default {
 
         limitField: {
             type: Boolean,
-            defaule: true
+            default: true
         },
 
         limitLabel: {
@@ -458,14 +458,15 @@ export default {
     width: 100%;   
 }
 
-.data-table .input-field.has-focus:not(.is-empty),
+.data-table .input-field:not(.is-empty),
+.data-table .input-field.has-focus,
 .data-table .input-field.has-activity {
     width: 115%;
 }
 
 .data-table-header {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     margin-bottom: 1rem;
 }
