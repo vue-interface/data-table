@@ -324,9 +324,9 @@ export default {
                 });
             }
         },
-
+        
         currentPage(value, oldValue) {
-            if(value && oldValue) {
+            if(value && (oldValue || oldValue === undefined)) {
                 const { height } = getComputedStyle(this.$el.querySelector('tbody'));
                 const { paddingTop, paddingBottom, borderBottomWidth } = getComputedStyle(this.$el.querySelector('td'));
 
