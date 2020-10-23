@@ -22,6 +22,8 @@ export default {
                             const sort = anchor.componentInstance.toggle();
                             
                             if(context.listeners && context.listeners.order) {
+                                e.preventDefault();
+                                
                                 context.listeners.order(
                                     vnode.data.attrs['data-order'], sort, anchor, context.children
                                 );
