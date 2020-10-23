@@ -227,8 +227,8 @@ export default {
                     params: Object.assign({
                         [this.limitParam]: this.currentLimit,
                         [this.pageParam]: this.currentPage,
-                        // order: this.currentSort && Object.entries(this.currentSort).map(([key]) => key).join(','),
-                        // sort: this.currentSort && Object.entries(this.currentSort).map(([key, value]) => value).join(','),
+                        order: this.currentSort.length ? this.currentSort.map(({ column }) => column).join(',') : undefined,
+                        sort: this.currentSort.length ? this.currentSort.map(({ direction }) => direction).join(',') : undefined,
                     }, this.params)
                 }));
             }
@@ -316,12 +316,17 @@ export default {
     },
 
     watch: {
-        currentSort(value) {
-            if(this.sortLimit && this.sortLimit < value.length) {
-                value.splice(0, this.sortLimit).forEach(({ vnode }) => {
-                    vnode.componentInstance.saveLastSort();
-                    vnode.componentInstance.clear();
-                });
+        currentSort: {
+            deep: true,
+            handler(value) {
+                if(this.sortLimit && this.sortLimit < value.length) {
+                    value.splice(0, this.sortLimit).forEach(({ vnode }) => {
+                        vnode.componentInstance.saveLastSort();
+                        vnode.componentInstance.clear();
+                    });
+                }
+
+                this.fetch();
             }
         },
         
@@ -405,10 +410,8 @@ export default {
 
         orderBy(column, direction, vnode) {
             // Find existing sort.
-            const existing = this.currentSort.reduce((carry, sort) => {
-                const [ key ] = Object.keys(sort);
-
-                return key === column ? sort : carry;
+            const existing = this.currentSort.reduce((carry, item) => {
+                return item.column === column ? item : carry;
             }, null);
 
             // Delete the sort if undefined.
@@ -417,12 +420,16 @@ export default {
             }
             // If sort exists, update the existing array.
             else if(existing) {
-                existing[column] = direction;
+                existing.direction = direction;
             }
             // If no matching sort, push the array.
             else {
-                this.currentSort.push({[column]: direction, vnode});
+                this.currentSort.push({column, direction, vnode});
             }
+        },
+
+        orderByKeys() {
+            return this.currentSort.filter();
         },
 
         onSearchInput(value) {

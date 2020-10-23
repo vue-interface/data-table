@@ -20,7 +20,7 @@ export default {
                     nativeOn: {
                         click(e) {
                             const sort = anchor.componentInstance.toggle();
-
+                            
                             if(context.listeners && context.listeners.order) {
                                 context.listeners.order(
                                     vnode.data.attrs['data-order'], sort, anchor, context.children
