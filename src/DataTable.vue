@@ -1,9 +1,9 @@
 <template>
     <div class="data-table">
         <slot name="content" />
-        <form ref="form" class="data-table-header" @submit.prevent="onSubmit">
+        <form v-if="title || search || $slots.left" ref="form" class="data-table-header" @submit.prevent="onSubmit">
             <div class="data-table-header-left">
-                <component :is="titleTag" v-if="title" :class="{'mb-3': search, 'mb-0': !search}">
+                <component v-if="title" :is="titleTag" :class="{'mb-3': search, 'mb-0': !search}">
                     {{ title }}
                 </component>
                 <input-field
@@ -108,8 +108,7 @@
 <script>
 import axios from 'axios';
 import InputField from '@vue-interface/input-field';
-import SelectField from '@vue-interface/select-field';
-import { debounce, prefix } from '@vue-interface/utils';
+import { debounce } from '@vue-interface/utils';
 import Shadowable from '@vue-interface/shadowable';
 import DataTableActivityIndicator from './DataTableActivityIndicator';
 import DataTableAnimatedGrid from './DataTableAnimatedGrid';
@@ -311,7 +310,9 @@ export default {
 
     computed: {
         colspan() {
-            return this.$slots.th.filter(vnode => !!vnode.tag).length || 1;
+            return this.$slots.th && (
+                this.$slots.th.filter(vnode => !!vnode.tag).length || 1
+            );
         }
     },
 
