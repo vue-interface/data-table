@@ -1,6 +1,6 @@
 {
   "name": "@vue-interface/data-table",
-  "version": "0.8.15",
+  "version": "0.9.0",
   "description": "A Vue data table component.",
   "files": [
     "index.js",
