@@ -3,17 +3,13 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>Table</title>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap-reboot.min.css">
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap-grid.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-interface/btn/dist/Btn.css">
-        <link rel="stylesheet" href="./dist/DataTable.css">
+        <title>DataTable</title>
     </head>
     <body>
-        <div id="app" class="container">
-            <h1 class="mb-5">data-table</h1>
+        <div id="app" class="container mx-auto">
+            <h1 class="text-4xl mb-5">data-table</h1>
 
-            <data-table url="https://api.thecatapi.com/v1/images/search" limit="10" page="2" :sort-limit="1" search>
+            <data-table url="https://api.thecatapi.com/v1/images/search" :limit="10" :page="2" :sort-limit="1" search>
                 <template #th>
                     <th width="200" data-order="image">Image</th>
                     <th data-order="width">Width</th>
@@ -26,11 +22,14 @@
                 </template>
             </data-table>
         </div>
+        <script type="module">
+            import './index.css';
+            import Vue from 'vue/dist/vue';
+            import { DataTable } from './index.js';
+            
+            Vue.config.devtools = false;
+            Vue.config.productionTip = false;
 
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.6/dist/vue.js"></script>
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@vue-interface/btn/dist/Btn.umd.min.js"></script>
-        <script type="text/javascript" src="./dist/DataTable.umd.js"></script>
-        <script type="text/javascript">
             const vue = new Vue({
                 el: '#app',
                 components: {

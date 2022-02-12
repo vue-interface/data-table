@@ -13,7 +13,8 @@
 </template>
 
 <script>
-import DataTableAnimatedGradient from './DataTableAnimatedGradient';
+import DataTableAnimatedGradient from './DataTableAnimatedGradient.vue';
+
 export default {
     components: {
         DataTableAnimatedGradient

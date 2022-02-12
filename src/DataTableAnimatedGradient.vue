@@ -3,8 +3,6 @@
 </template>
 
 <script>
-import { unit } from '@vue-interface/utils';
-
 export default {
     props: {
         pulse: Boolean,

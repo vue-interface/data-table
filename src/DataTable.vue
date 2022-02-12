@@ -3,31 +3,39 @@
         <slot name="content" />
         <form v-if="title || search || $slots.left" ref="form" class="data-table-header" @submit.prevent="onSubmit">
             <div class="data-table-header-left">
-                <component v-if="title" :is="titleTag" :class="{'mb-3': search, 'mb-0': !search}">
-                    {{ title }}
-                </component>
-                <input-field
-                    v-if="search"
-                    v-model="params[searchParam]"
-                    icon="search"
-                    :activity="isSubmitting"
-                    :group="false"
-                    :placeholder="searchPlaceholder"
-                    pill
-                    @input="onSearchInput">
-                    <template #icon>
-                        <magnifying-glass width="1rem" height="1rem" />
-                    </template>
-                </input-field>
+                <slot name="title">
+                    <component :is="titleTag" v-if="title" :class="{'mb-3': search, 'mb-0': !search}">
+                        {{ title }}
+                    </component>
+                </slot>
+                <slot name="search">
+                    <input-field
+                        v-if="search"
+                        v-model="params[searchParam]"
+                        :activity="isSubmitting"
+                        :group="false"
+                        :placeholder="searchPlaceholder"
+                        :label="searchLabel"
+                        pill
+                        @input="onSearchInput">
+                        <template #icon>
+                            <slot name="search-icon">
+                                <magnifying-glass width="1rem" height="1rem" />
+                            </slot>
+                        </template>
+                    </input-field>
+                </slot>
                 <slot name="left" />
             </div>
             <div class="data-table-header-right">
-                <label v-if="hasLoadedOnce && limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
-                    <span class="mr-2">{{ limitLabel }}</span>
-                    <select v-model="currentLimit" class="form-control">
-                        <option v-for="value in limitOptions" :key="value">{{ value }}</option>
-                    </select>
-                </label>
+                <slot name="limit">
+                    <label v-if="hasLoadedOnce && limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
+                        <span class="mr-2">{{ limitLabel }}</span>
+                        <select v-model="currentLimit" class="form-select form-control">
+                            <option v-for="value in limitOptions" :key="value">{{ value }}</option>
+                        </select>
+                    </label>
+                </slot>
                 <slot name="right" />
             </div>
         </form>
@@ -107,17 +115,17 @@
 
 <script>
 import axios from 'axios';
-import InputField from '@vue-interface/input-field';
-import { debounce } from '@vue-interface/utils';
-import Shadowable from '@vue-interface/shadowable';
-import DataTableActivityIndicator from './DataTableActivityIndicator';
-import DataTableAnimatedGrid from './DataTableAnimatedGrid';
-import DataTableError from './DataTableError';
-import DataTableHead from './DataTableHead';
-import DataTablePagination from './DataTablePagination';
-import DataTablePlaceholder from './DataTablePlaceholder';
-import EmptyBox from './EmptyBox';
-import MagnifyingGlass from './MagnifyingGlass';
+import debounce from 'lodash.debounce';
+import { InputField } from '@vue-interface/input-field';
+import { Shadowable } from '@vue-interface/shadowable';
+import DataTableActivityIndicator from './DataTableActivityIndicator.vue';
+import DataTableAnimatedGrid from './DataTableAnimatedGrid.vue';
+import DataTableError from './DataTableError.vue';
+import DataTableHead from './DataTableHead.vue';
+import DataTablePagination from './DataTablePagination.vue';
+import DataTablePlaceholder from './DataTablePlaceholder.vue';
+import EmptyBox from './EmptyBox.vue';
+import MagnifyingGlass from './MagnifyingGlass.vue';
 
 const debounced = debounce((fn, ...args) => fn(...args), 500);
 
@@ -237,6 +245,8 @@ export default {
             type: Boolean,
             default: false
         },
+
+        searchLabel: String,
 
         searchPlaceholder: {
             type: String,

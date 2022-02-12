@@ -29,8 +29,8 @@
 </template>
 
 <script>
-import Shadowable from '@vue-interface/shadowable';
-import Pagination from '@vue-interface/pagination';
+import { Shadowable } from '@vue-interface/shadowable';
+import { Pagination } from '@vue-interface/pagination';
 
 export default {
     components: {

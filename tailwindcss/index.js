@@ -1,12 +1,7 @@
 const Color = require('color');
-const rgba = require('hex-to-rgba');
 const plugin = require('tailwindcss/plugin');
-const { colors } = require('tailwindcss/defaultTheme');
-const defaultVariations = require('@vue-interface/variant/tailwindcss/defaultVariations');
-
-function darken(color, ...args) {
-    return Color(color).darken(...args).hex();
-}
+const colors = require('tailwindcss/colors');
+const variations = require('@vue-interface/variant/tailwindcss/variations');
 
 function opacity(color) {
     const matches = Color(color)
@@ -21,18 +16,15 @@ function contrast(color, light, dark) {
 }
 
 function mix(color, subject, percent) {
-    return Color(color).mix(Color(subject), percent).hex();
+    return Color(color).mix(Color(subject), percent);
 }
 
 function opaque(background, foreground) {
-    return mix(Color(foreground).alpha(1).hex(), background, opacity(foreground));
+    return mix(Color(foreground).alpha(1), background, opacity(foreground));
 }
 
 module.exports = plugin(function({ addComponents, theme }) {
-
-    
-    const component = {
-        
+    const component = {        
         // Include styles from the reboot
         '.table thead, .table tbody, .table tfoot, .table tr, .table td, .table th': {
             borderColor: 'inherit',
@@ -148,7 +140,7 @@ module.exports = plugin(function({ addComponents, theme }) {
     // Table variants set the table cell backgrounds, border colors
     // and the colors of the striped, hovered & active tables
 
-    Object.entries(theme('variations', defaultVariations))
+    Object.entries(theme('variations', variations))
         .forEach(([state, background]) => {
             const color = contrast(opaque('#fff', background));
 
@@ -185,11 +177,15 @@ module.exports = plugin(function({ addComponents, theme }) {
     addComponents(component);
 }, {
     theme: {
-        table: theme => ({
+        table: theme => ({            
             color: 'inherit',
             backgroundColor: 'transparent',
             borderWidth: '1px',
-            borderColor: theme('colors.gray.300', colors.gray[300]),
+            borderColor: theme('colors.gray.200', colors.gray[200]),
+
+            th: {
+                fontWeight: 'bold'
+            },
 
             cell: {
                 paddingY: '.5rem',
@@ -200,25 +196,25 @@ module.exports = plugin(function({ addComponents, theme }) {
             striped: {
                 order: 'odd',
                 color: 'inherit',
-                backgroundColor: `${rgba(theme('colors.black', colors.black), .05)}`,
+                backgroundColor: `${Color(theme('colors.black', colors.black)).fade(.05)}`,
             },
 
             active: {
                 color: 'inherit',
-                backgroundColor: `${rgba(theme('colors.black', colors.black), .1)}`,
+                backgroundColor: `${Color(theme('colors.black', colors.black)).fade(.1)}`,
             },
 
             hover: {
                 color: 'inherit',
-                backgroundColor: `${rgba(theme('colors.black', colors.black), .075)}`,
+                backgroundColor: `${Color(theme('colors.black', colors.black)).fade(.075)}`,
             },
 
             seperator: {
-                borderColor: 'currentColor'
+                borderColor: theme('colors.gray.200', colors.gray[200])
             },
             
             caption: {
-                color: 'currentColor'
+                borderColor: theme('colors.gray.400', colors.gray[400])
             },
 
             sm: {

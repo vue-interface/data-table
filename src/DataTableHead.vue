@@ -1,5 +1,5 @@
 <script>
-import DataTableAnchor from './DataTableAnchor';
+import DataTableAnchor from './DataTableAnchor.vue';
 
 export default {
     functional: true,
