@@ -500,7 +500,7 @@ export default {
 }
 
 .data-table-header .data-table-header-inline-field.has-slot {
-    margin-right: 1rem;
+    margin-right: .75rem;
 }
 
 .data-table-header .data-table-header-inline-field span {
