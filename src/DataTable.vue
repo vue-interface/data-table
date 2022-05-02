@@ -16,7 +16,7 @@
                         :group="false"
                         :placeholder="searchPlaceholder"
                         :label="searchLabel"
-                        pill
+                        class="data-table-search"
                         @input="onSearchInput">
                         <template #icon>
                             <slot name="search-icon">
@@ -29,8 +29,8 @@
             </div>
             <div class="data-table-header-right">
                 <slot name="limit">
-                    <label v-if="hasLoadedOnce && limitField" class="data-table-header-inline-field" :class="{'mr-3': !!$slots.right}">
-                        <span class="mr-2">{{ limitLabel }}</span>
+                    <label v-if="hasLoadedOnce && limitField" class="data-table-header-inline-field" :class="{'has-slot': !!$slots.right}">
+                        <span class="data-table-header-inline-field-label">{{ limitLabel }}</span>
                         <select v-model="currentLimit" class="form-select form-control">
                             <option v-for="value in limitOptions" :key="value">{{ value }}</option>
                         </select>
@@ -126,6 +126,7 @@ import DataTablePagination from './DataTablePagination.vue';
 import DataTablePlaceholder from './DataTablePlaceholder.vue';
 import EmptyBox from './EmptyBox.vue';
 import MagnifyingGlass from './MagnifyingGlass.vue';
+import { handleResponse, handleRequest } from './transformers.js';
 
 const debounced = debounce((fn, ...args) => fn(...args), 500);
 
@@ -230,7 +231,9 @@ export default {
         request: {
             type: Function,
             default() {
-                return this.axios.get(this.url, this.transformRequest({
+                const transformer = this.transformRequest || handleRequest;
+
+                return this.axios.get(this.url, transformer({
                     params: Object.assign({
                         [this.limitParam]: this.currentLimit,
                         [this.pageParam]: this.currentPage,
@@ -265,34 +268,32 @@ export default {
             default: 'h3'
         },
 
-        transformRequest: {
-            type: Function,
-            default: data => data
-        },
+        transformRequest: Function,
 
-        transformResponse: {
-            type: Function,
-            default: response => {
-                if(Array.isArray(response)) {
-                    return {
-                        data: response,
-                        totalPages: Infinity
-                    };
-                }
-                else if(typeof response === 'object') {
-                    return {
-                        // Attempt to extract the data from `data` or `items` props.
-                        data: response.data || response.items,
+        transformResponse: Function,
+        
+        // default: response => {
+        //     console.log('test');
+                
+        // if(Array.isArray(response)) {
+        //     return {
+        //         data: response,
+        //         totalPages: Infinity
+        //     };
+        // }
+        // else if(typeof response === 'object') {
+        //     return {
+        //         // Attempt to extract the data from `data` or `items` props.
+        //         data: response.data || response.items,
 
-                        // Attempt to extract the total pages from the response
-                        // using logical defaults.
-                        totalPages: response.last_page || response.lastPage || response.totalPages || response.total_pages
-                    };
-                }
+        //         // Attempt to extract the total pages from the response
+        //         // using logical defaults.
+        //         totalPages: response.last_page || response.lastPage || response.totalPages || response.total_pages
+        //     };
+        // }
 
-                throw new Error(`Invalid response type ${typeof response}`);
-            }
-        },
+        // throw new Error(`Invalid response type ${typeof response}`);
+        // }
 
         size: String,
 
@@ -367,36 +368,31 @@ export default {
     methods: {
 
         handleResponse(response) {
-            const transformed = this.transformResponse(response);
+            const transformer = this.transformResponse || handleResponse;
+            const transformed = transformer(response);
 
-            if(Array.isArray(transformed)) {
-                this.currentData = transformed;
-                this.totalPages = Infinity;
+            if(typeof transformed === 'object') {
+                const { data, totalPages } = transformed;
+
+                this.hasLoadedOnce = true;
+                this.currentData = data;
+                this.totalPages = totalPages;
+
+                return transformed;
             }
 
-            const { data, totalPages } = transformed;
-
-            this.currentData = data;
-            this.totalPages = totalPages;
-
-            return transformed;
+            throw Error('The transformed response must return an object.');
         },
 
         fetch() {
             this.isLoading = true;
             
-            return this.request().then(({ data }) => {  
-                const response = this.handleResponse(data);
-  
-                this.currentPage = this.currentPage;
-                this.isLoading = false;
-                this.hasLoadedOnce = true;
-         
-                return response;
-            }, e => {
-                this.isLoading = false;
-                this.error = e;
-            });
+            return this.request()
+                .then(this.handleResponse, e => {
+                    this.error = e;
+                }).finally(() => {
+                    this.isLoading = false;
+                });
         },
 
         setPage(page) {
@@ -482,6 +478,10 @@ export default {
     width: 115%;
 }
 
+.data-table .data-table-search .form-control {
+    border-radius: 1000rem;
+}
+
 .data-table-header {
     display: flex;
     align-items: flex-end;
@@ -499,8 +499,16 @@ export default {
     margin: 0;
 }
 
+.data-table-header .data-table-header-inline-field.has-slot {
+    margin-right: 1rem;
+}
+
 .data-table-header .data-table-header-inline-field span {
     flex-shrink: 0;
+}
+
+.data-table-header .data-table-header-inline-field-label {
+    margin-right: .5rem;
 }
 
 .data-table-pagination {

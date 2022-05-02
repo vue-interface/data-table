@@ -9,7 +9,6 @@ module.exports = {
         require('@vue-interface/variant/tailwindcss'),
         require('@vue-interface/btn/tailwindcss'),
         ...require('@vue-interface/form-control/tailwindcss'),
-        // require('@vue-interface/form-control/tailwindcss/custom-fields'),
         require('@vue-interface/pagination/tailwindcss'),
         require('./tailwindcss'),
     ],
