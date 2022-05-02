@@ -3,10 +3,10 @@
         <tr>
             <td :colspan="colspan">
                 <div class="data-table-placeholder">
-                    <h3 v-if="title">
+                    <h3 v-if="title" class="data-table-placeholder-title">
                         {{ title }}
                     </h3>
-                    <h4 v-if="subtitle" class="font-weight-light">
+                    <h4 v-if="subtitle" class="data-table-placeholder-subtitle">
                         {{ subtitle }}
                     </h4>
                     <div class="data-table-placeholder-content">
@@ -33,16 +33,18 @@ export default {
     text-align: center;
     padding: 2rem 0;
 }
-.data-table-placeholder > h3 {
+.data-table-placeholder .data-table-placeholder-title {
     font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
 }
-.data-table-placeholder > h4 {
+.data-table-placeholder .data-table-placeholder-subtitle {
     font-size: 1.5rem;
     font-weight: normal;
+    margin-bottom: 1rem;
 }
 .data-table-placeholder-content {
     display: flex;
     justify-content: center;
-    padding: 1rem 0;
 }
 </style>

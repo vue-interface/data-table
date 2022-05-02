@@ -2585,7 +2585,7 @@ var render$3 = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("tbody", [_c("tr", [_c("td", { attrs: { "colspan": _vm.colspan } }, [_c("div", { staticClass: "data-table-placeholder" }, [_vm.title ? _c("h3", [_vm._v(" " + _vm._s(_vm.title) + " ")]) : _vm._e(), _vm.subtitle ? _c("h4", { staticClass: "font-weight-light" }, [_vm._v(" " + _vm._s(_vm.subtitle) + " ")]) : _vm._e(), _c("div", { staticClass: "data-table-placeholder-content" }, [_vm._t("default")], 2)])])])]);
+  return _c("tbody", [_c("tr", [_c("td", { attrs: { "colspan": _vm.colspan } }, [_c("div", { staticClass: "data-table-placeholder" }, [_vm.title ? _c("h3", { staticClass: "data-table-placeholder-title" }, [_vm._v(" " + _vm._s(_vm.title) + " ")]) : _vm._e(), _vm.subtitle ? _c("h4", { staticClass: "data-table-placeholder-subtitle" }, [_vm._v(" " + _vm._s(_vm.subtitle) + " ")]) : _vm._e(), _c("div", { staticClass: "data-table-placeholder-content" }, [_vm._t("default")], 2)])])])]);
 };
 var staticRenderFns$3 = [];
 var DataTablePlaceholder_vue_vue_type_style_index_0_lang = "";
